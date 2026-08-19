@@ -50,7 +50,8 @@ class MovieControllerTest {
         ResultActions response = mockMvc.perform(get("/movies/search").param("title", "Matrix"));
 
         // Assert
-        response.andExpect(status().isOk())
+        // response.andExpect(status().isNotFound())
+        response.andExpect(status().isOk()) // real
                 .andExpect(jsonPath("$.Title").value("Matrix"))
                 .andExpect(jsonPath("$.Response").value("True"));
         verify(movieService).searchByTitle("Matrix");
