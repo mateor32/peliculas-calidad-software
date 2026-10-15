@@ -21,22 +21,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Pruebas unitarias de MovieService en aislamiento total: MovieClient se
- * reemplaza
- * por un mock de Mockito, por lo que ningun test llama a la API externa real.
- */
+//Pruebas unitarias de MovieService en aislamiento: MovieClient se reemplaza
+
 @ExtendWith(MockitoExtension.class)
 class MovieServiceTest {
 
+    // SImular api
     @Mock
     private MovieClient movieClient;
-
+    // Ponemos en el service el mock
     @InjectMocks
     private MovieService movieService;
 
-    // ---- Helper solo para los tests: arma un Movie usando los setters existentes
-    // ----
+    // Metodo que ayuda a crear un mockito de prueba
     private Movie buildMovie(String title, String response) {
         Movie movie = new Movie();
         movie.setTitle(title);
@@ -53,16 +50,21 @@ class MovieServiceTest {
     void searchByTitle_deberiaRetornarPelicula_cuandoMovieClientEncuentraCoincidencia() {
         // Arrange
         String titulo = "Matrix";
+        // cuando el movieClient busque por titulo devuelva la pelicula encontrada
         Movie peliculaEncontrada = buildMovie("Matrix", "True");
         when(movieClient.searchByTitle(titulo)).thenReturn(peliculaEncontrada);
 
         // Act
+        // Llamamos al metodo
         Movie resultado = movieService.searchByTitle(titulo);
 
         // Assert
         assertNotNull(resultado);
+        // Verificamos que el resultado sea el esperado
         assertEquals("Matrix", resultado.getTitle());
+
         assertEquals("True", resultado.getResponse());
+        // Que si haya sido llamado por el titulo
         verify(movieClient).searchByTitle(titulo);
     }
 

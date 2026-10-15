@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.calidadsoftware'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    jmhVersion = '1.37'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.openjdk.jmh:jmh-core:${jmhVersion}"
+    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${jmhVersion}"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register('benchmark', JavaExec) {
+    description = 'Ejecuta los benchmarks JMH (reemplaza al exec-maven-plugin del pom original).'
+    group = 'verification'
+    dependsOn tasks.named('testClasses')
+    mainClass = 'com.calidadsoftware.peliculas.benchmark.BenchmarkRunner'
+    classpath = sourceSets.test.runtimeClasspath
+}

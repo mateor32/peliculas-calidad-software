@@ -51,13 +51,29 @@ export OMDB_API_KEY=tu_api_key_aqui
 
 ## 3. Ejecutar el proyecto
 
-Desde la carpeta raiz del proyecto:
+Desde la carpeta raiz del proyecto, usando el Gradle Wrapper (no requiere Gradle instalado):
+
+**Windows PowerShell:**
 
 ```powershell
-mvn spring-boot:run
+.\gradlew.bat bootRun
+```
+
+**Linux/macOS:**
+
+```bash
+./gradlew bootRun
 ```
 
 La aplicacion levanta en `http://localhost:8080`.
+
+Para ejecutar las pruebas unitarias:
+
+```powershell
+.\gradlew.bat test
+```
+
+(En Linux/macOS: `./gradlew test`.)
 
 ## 4. Probar el endpoint
 

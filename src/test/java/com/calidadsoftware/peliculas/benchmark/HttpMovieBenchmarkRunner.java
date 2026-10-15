@@ -5,26 +5,23 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
-/**
- * Punto de entrada para el benchmark HTTP (llama al microservicio real).
- * Requisito previo: la app debe estar corriendo en otra terminal:
- * mvn spring-boot:run
- * (con la variable de entorno OMDB_API_KEY configurada).
- *
- * Se usan menos iteraciones y warmup mas corto que en MovieServiceBenchmark
- * porque cada operacion aqui implica una llamada de red real, no solo
- * codigo en memoria.
- */
 public class HttpMovieBenchmarkRunner {
 
     public static void main(String[] args) throws Exception {
         Options opciones = new OptionsBuilder()
+                // vamos a probar lo de la clase benchemark, vacio y valido
                 .include(HttpMovieBenchmark.class.getSimpleName())
+                // Calentar para que la JVM optimice el código antes de medir
                 .warmupIterations(3)
+                // Es para calentar durante 500ms cada iteracion
                 .warmupTime(TimeValue.milliseconds(500))
+                // Y vamos a medir 5 iteraciones
                 .measurementIterations(5)
+                // Es para medir durante 500ms cada iteracion
                 .measurementTime(TimeValue.milliseconds(500))
+                // para no crear ua nueva jvm y que no se pierda el estado de test.
                 .forks(0)
+                // Usamos un hilo
                 .threads(1)
                 .build();
 

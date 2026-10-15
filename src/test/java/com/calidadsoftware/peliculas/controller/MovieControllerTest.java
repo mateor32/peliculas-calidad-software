@@ -18,19 +18,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Pruebas unitarias de MovieController en aislamiento: MovieService se
- * reemplaza
- * por un mock de Mockito (@MockBean), por lo que ningun test ejecuta la logica
- * real de negocio ni llama a la API externa. MockMvc simula las peticiones HTTP
- * sin levantar un servidor real.
- */
 @WebMvcTest(MovieController.class)
 class MovieControllerTest {
-
+    // MockMvc simula las peticiones HTTP sin levantar un servidor real
     @Autowired
     private MockMvc mockMvc;
-
+    // MockBean reemplaza service por un mockito
     @MockBean
     private MovieService movieService;
 
@@ -38,6 +31,7 @@ class MovieControllerTest {
     @DisplayName("1. Pelicula encontrada: GET /movies/search?title=Matrix devuelve 200 con la pelicula")
     void searchByTitle_deberiaRetornar200ConLaPelicula_cuandoMovieServiceLaEncuentra() throws Exception {
         // Arrange
+        // ayudaa armar un Movie de prueba
         Movie peliculaEncontrada = new Movie();
         peliculaEncontrada.setTitle("Matrix");
         peliculaEncontrada.setYear("1999");
@@ -47,9 +41,11 @@ class MovieControllerTest {
         when(movieService.searchByTitle("Matrix")).thenReturn(peliculaEncontrada);
 
         // Act
+        // Simulamos la peticion HTTP GET /movies/search?title=Matrix
         ResultActions response = mockMvc.perform(get("/movies/search").param("title", "Matrix"));
 
         // Assert
+        // Comprobamos que la respuesta tenga status 200 OK y el JSON esperado
         // response.andExpect(status().isNotFound())
         response.andExpect(status().isOk()) // real
                 .andExpect(jsonPath("$.Title").value("Matrix"))

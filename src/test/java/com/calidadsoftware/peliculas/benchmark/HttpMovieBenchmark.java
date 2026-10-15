@@ -17,20 +17,19 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Microbenchmarks que SI llaman al microservicio real por HTTP (a diferencia
- * de MovieServiceBenchmark, que usa StubMovieClient y no toca la red).
- * Requiere que la app este corriendo antes de ejecutar este benchmark:
- * mvn spring-boot:run
- */
+// le dice al JMH que cree un solo objeto de esta clase y lo comparta entre
+// todos los hilos (1 tenemos)
 @State(Scope.Benchmark)
+// jmh va a medir osea el tiempo promedio de cada operacion (129ms/op)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-public class HttpMovieBenchmark {
 
+// Con esta clase vamos a medir cuanto tarda las peticiones http reales
+public class HttpMovieBenchmark {
+    // Aqui esta la app, y el titulo q vamos a buscar.
     private static final String BASE_URL = System.getProperty("benchmark.baseUrl", "http://localhost:8080");
     private static final String TITULO_VALIDO = System.getProperty("benchmark.title", "Matrix");
-
+    // objeto http que vamos a comunicar
     private HttpClient httpClient;
     private URI uriTituloValido;
     private URI uriTituloVacio;
@@ -54,15 +53,22 @@ public class HttpMovieBenchmark {
         }
     }
 
+    // Metodo que va a medir cuanto tarda en buscar una pelicula valida y otra
+    // vacia.
     @Benchmark
     public void searchByTitle_tituloValido_peliculaEncontrada(Blackhole blackhole) throws Exception {
+        // Se hace una peticion get http.
         HttpResponse<String> response = httpClient.send(
+                // Construye la peticion http con el titulo valido.
                 HttpRequest.newBuilder(uriTituloValido).GET().build(),
+                // recibe
                 HttpResponse.BodyHandlers.ofString());
+        // Resultado de la operacion
         blackhole.consume(response.statusCode());
         blackhole.consume(response.body());
     }
 
+    // GET /movies/search?title=
     @Benchmark
     public void searchByTitle_tituloVacio_lanzaExcepcion(Blackhole blackhole) throws Exception {
         HttpResponse<String> response = httpClient.send(
