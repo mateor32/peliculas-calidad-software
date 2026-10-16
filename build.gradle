@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.4'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.sonarqube' version '6.2.0.5505'
+    id 'jacoco'
 }
 
 group = 'com.calidadsoftware'
@@ -28,9 +30,21 @@ dependencies {
     testImplementation "org.openjdk.jmh:jmh-core:${jmhVersion}"
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${jmhVersion}"
 }
+jacoco {
+    toolVersion = '0.8.12'
+}
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true    // lo lee SonarCloud
+        html.required = true   // lo abres tú en el navegador
+    }
 }
 
 tasks.register('benchmark', JavaExec) {
@@ -39,4 +53,25 @@ tasks.register('benchmark', JavaExec) {
     dependsOn tasks.named('testClasses')
     mainClass = 'com.calidadsoftware.peliculas.benchmark.BenchmarkRunner'
     classpath = sourceSets.test.runtimeClasspath
+}
+
+sonar {
+    properties {
+        def osName = System.getProperty('os.name').toLowerCase()
+def osArch = System.getProperty('os.arch').toLowerCase()
+        property 'sonar.scanner.os', osName.contains('win') ? 'windows' : (osName.contains('mac') ? 'macosx' : 'linux')
+        property 'sonar.scanner.arch', (osArch.contains('aarch64') || osArch.contains('arm64')) ? 'aarch64' : 'x64'
+        property 'sonar.projectKey', 'mateor32_peliculas-calidad-software'   // tu Project Key
+        property 'sonar.organization', 'mateor32'                             // tu Organization Key
+        property 'sonar.host.url', 'https://sonarcloud.io'
+        property 'sonar.sources', 'src/main/java'
+        property 'sonar.tests', 'src/test/java'
+        property 'sonar.java.binaries', 'build/classes/java/main'
+        property 'sonar.exclusions', '**/benchmark/**'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
+        property 'sonar.coverage.exclusions', '**/benchmark/**,**/*Application.java'
+        // Sonar Scanner requiere Java 21+. Como el proyecto corre con Java 17,
+        // dejamos que el scanner descargue su propio JRE 21 (cacheado la 1a vez).
+        property 'sonar.scanner.skipJreProvisioning', 'false'
+    }
 }
