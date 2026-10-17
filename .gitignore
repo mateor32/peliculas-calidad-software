@@ -7,3 +7,5 @@ build/
 .vscode/
 .mvn/
 !.mvn/wrapper/maven-wrapper.jar
+# gradle.properties: ruta absoluta al JDK local, no se comparte con el equipo
+gradle.properties

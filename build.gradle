@@ -29,6 +29,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation "org.openjdk.jmh:jmh-core:${jmhVersion}"
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${jmhVersion}"
+    testImplementation 'com.intuit.karate:karate-junit5:1.4.1'
 }
 jacoco {
     toolVersion = '0.8.12'
@@ -36,7 +37,23 @@ jacoco {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Las pruebas de aceptacion (Karate) corren aparte en :acceptanceTest
+    // para no mezclarlas con las unitarias ni afectar la cobertura JaCoCo/Sonar.
+    exclude '**/acceptance/**'
     finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.register('acceptanceTest', Test) {
+    description = 'Pruebas de aceptacion de la API con Karate.'
+    group = 'verification'
+    useJUnitPlatform()
+    include '**/acceptance/**'
+    shouldRunAfter tasks.named('test')
+    outputs.upToDateWhen { false }
+    // Karate escribe aqui los HTML / cucumber.json
+    systemProperty 'karate.output.dir', "${layout.buildDirectory.get().asFile.path}/karate-reports"
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
 }
 
 tasks.named('jacocoTestReport') {
@@ -58,7 +75,7 @@ tasks.register('benchmark', JavaExec) {
 sonar {
     properties {
         def osName = System.getProperty('os.name').toLowerCase()
-def osArch = System.getProperty('os.arch').toLowerCase()
+        def osArch = System.getProperty('os.arch').toLowerCase()
         property 'sonar.scanner.os', osName.contains('win') ? 'windows' : (osName.contains('mac') ? 'macosx' : 'linux')
         property 'sonar.scanner.arch', (osArch.contains('aarch64') || osArch.contains('arm64')) ? 'aarch64' : 'x64'
         property 'sonar.projectKey', 'mateor32_peliculas-calidad-software'   // tu Project Key

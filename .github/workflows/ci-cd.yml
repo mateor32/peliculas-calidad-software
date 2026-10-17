@@ -1,0 +1,76 @@
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-analyze:
+    runs-on: ubuntu-latest
+    env:
+      OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Pruebas unitarias y JaCoCo
+        run: ./gradlew test jacocoTestReport
+
+      - name: Pruebas de aceptación (Karate)
+        run: ./gradlew acceptanceTest
+
+      - name: Análisis SonarCloud y Quality Gate
+        if: github.event.pull_request.head.repo.fork != true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar -Dsonar.qualitygate.wait=true
+
+      - name: Generar artefacto (JAR)
+        run: ./gradlew bootJar
+
+      - name: Subir JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: peliculas-backend-jar
+          path: build/libs/*.jar
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes
+          path: |
+            build/reports/jacoco/
+            build/karate-reports/
+
+  release:
+    needs: build-analyze
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: peliculas-backend-jar
+          path: dist
+
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.jar
